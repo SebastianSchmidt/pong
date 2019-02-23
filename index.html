@@ -1,0 +1,207 @@
+<html>
+  <head>
+    <title>Pong</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="canvas" width="700" height="400"></canvas>
+    <p>Spieler 1: W / S</p>
+    <p>Spieler 2: I / J</p>
+    <script>
+      const c = document.getElementById("canvas")
+      const ctx = c.getContext("2d")
+
+      const width = 700
+      const height = 400
+      const panelThickness = 10
+      const panelSize = 75
+      const panelDistance = 50
+      const ballSize = 10
+
+      const fps = 30
+      const wait = 1000 / 30
+      const moveStep = 5
+      const minBallAcc = 5
+      const maxBallAcc = 9
+
+      const player1 = {
+        score: 0,
+        positionX: panelDistance,
+        positionY: height / 2 - panelSize / 2
+      }
+      const player2 = {
+        ...player1,
+        positionX: width - panelDistance
+      }
+      const ball = {
+        x: 0,
+        y: 0,
+        accX: 0,
+        accY: 0
+      }
+      point()
+
+      const keyState = {}
+      window.addEventListener(
+        "keydown",
+        function(e) {
+          keyState[e.keyCode || e.which] = true
+        },
+        true
+      )
+      window.addEventListener(
+        "keyup",
+        function(e) {
+          keyState[e.keyCode || e.which] = false
+        },
+        true
+      )
+
+      function gameLoop() {
+        input()
+        physics()
+        draw()
+        setTimeout(gameLoop, wait)
+      }
+      gameLoop()
+
+      function input() {
+        if (keyState[87]) {
+          player1.positionY = Math.max(0, player1.positionY - moveStep)
+        }
+        if (keyState[83]) {
+          player1.positionY = Math.min(
+            height - panelSize,
+            player1.positionY + moveStep
+          )
+        }
+        if (keyState[73]) {
+          player2.positionY = Math.max(0, player2.positionY - moveStep)
+        }
+        if (keyState[74]) {
+          player2.positionY = Math.min(
+            height - panelSize,
+            player2.positionY + moveStep
+          )
+        }
+      }
+
+      function pointPlayer1() {
+        player1.score += 1
+        point()
+      }
+
+      function pointPlayer2() {
+        player2.score += 1
+        point()
+      }
+
+      function point() {
+        if (Math.round(Math.random()) === 1) {
+          ball.x = width / 2
+          ball.accX = -minBallAcc
+        } else {
+          ball.x = width / 2
+          ball.accX = minBallAcc
+        }
+        ball.y = height / 2
+        ball.accY = Math.round(Math.random()) === 1 ? 5 : -5
+
+        if (player1.score >= 10 || player2.score >= 10) {
+          player1.score = 0
+          player2.score = 0
+        }
+      }
+
+      function physics() {
+        ball.x += ball.accX
+        ball.y += ball.accY
+
+        if (ball.y >= height - ballSize) {
+          ball.y = height - ballSize
+          ball.accY = -ball.accY
+        }
+
+        if (ball.x >= width - ballSize) {
+          pointPlayer1()
+          //ball.x = width - ballSize
+          //ball.accX = -ball.accX
+        }
+
+        if (ball.y <= 0) {
+          ball.y = 0
+          ball.accY = -ball.accY
+        }
+
+        if (ball.x <= 0) {
+          pointPlayer2()
+          //ball.x = 0
+          //ball.accX = -ball.accX
+        }
+
+        if (
+          player1.positionY <= ball.y &&
+          player1.positionY + panelSize >= ball.y &&
+          player1.positionX <= ball.x &&
+          player1.positionX + panelThickness >= ball.x
+        ) {
+          ball.x = player1.positionX + panelThickness + 1
+          ball.accX =
+            -ball.accX * (ball.y / (player1.positionY + panelSize) + 0.5)
+          ball.accX = Math.min(maxBallAcc, ball.accX + 1)
+        }
+
+        if (
+          player2.positionY <= ball.y &&
+          player2.positionY + panelSize >= ball.y &&
+          player2.positionX <= ball.x &&
+          player2.positionX + panelThickness >= ball.x
+        ) {
+          ball.x = player2.positionX - panelThickness - 1
+          ball.accX =
+            -ball.accX * (ball.y / (player2.positionY + panelSize) + 0.5)
+          ball.accX = Math.max(-maxBallAcc, ball.accX - 1)
+        }
+      }
+
+      function draw() {
+        ctx.fillStyle = "#000000"
+        ctx.fillRect(0, 0, width, height)
+
+        ctx.fillStyle = "#FFFFFF"
+        ctx.strokeStyle = "#FFFFFF"
+
+        ctx.setLineDash([5, 5])
+        ctx.beginPath()
+        ctx.moveTo(width / 2, 0)
+        ctx.lineTo(width / 2, height)
+        ctx.stroke()
+
+        ctx.font = "30px Arial"
+        ctx.textAlign = "center"
+        ctx.fillText(player1.score, width / 2 - 50, 50)
+        ctx.fillText(player2.score, width / 2 + 50, 50)
+
+        ctx.fillRect(ball.x, ball.y, ballSize, ballSize)
+
+        ctx.fillRect(
+          player1.positionX,
+          player1.positionY,
+          panelThickness,
+          panelSize
+        )
+        ctx.fillRect(
+          player2.positionX,
+          player2.positionY,
+          panelThickness,
+          panelSize
+        )
+      }
+    </script>
+  </body>
+</html>
